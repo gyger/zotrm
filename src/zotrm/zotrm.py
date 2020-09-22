@@ -11,17 +11,22 @@ import glob
 import re
 import argparse
 import subprocess
+
+import appdirs
+import click
 from pyzotero import zotero
+
+from zotrm import __version__, config_path
 
 def read_config():
     '''
     Read the configuration file and return a dictionary of parameters.
     '''
     config = configparser.ConfigParser()
-    config_file = os.path.expanduser('~/.zotrm/config.ini')
-    if not os.path.exists(config_file):
-        print("Configuration file not found, exiting.")
-        return -1
+    config_file = config_path / 'config.ini'
+    print(config_file)
+    if not config_file.exists():
+        raise FileNotFoundError(f"Configuration file not found in {config_file}, exiting.")
     config.read(config_file)
 
     d = {}
@@ -59,8 +64,9 @@ def get_attachment(papers, zot, config):
 
     return attachments
 
-
-def main(verbose=False):
+@click.command()
+@click.option('--verbose', default=False)
+def script(verbose):
     # Read configuration file
     config = read_config()
     rmapi_path = config['rmapi_path']
@@ -210,11 +216,4 @@ def main(verbose=False):
         zot.update_item(paper)
         if verbose:
             print("\tUpdated tags.")
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Send papers from Zotero to ReMarkable tablet.")
-    parser.add_argument('--verbose', '-v', action='store_true')
-    args = parser.parse_args()
-
-    main(args.verbose)
 
